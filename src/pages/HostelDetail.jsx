@@ -7,6 +7,7 @@ import {
     Box, Typography, Grid, Card, CardContent, Stack, Chip,
     CircularProgress, Alert, Rating, Button, Divider,
     Dialog, DialogTitle, DialogContent, DialogActions, TextField, Paper, Avatar,
+    MenuItem, Select, FormControl, InputLabel,
 } from '@mui/material';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import ApartmentIcon from '@mui/icons-material/Apartment';
@@ -14,7 +15,7 @@ import MeetingRoomIcon from '@mui/icons-material/MeetingRoom';
 import StarIcon from '@mui/icons-material/Star';
 import BookOnlineIcon from '@mui/icons-material/BookOnline';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { getHostelById, getRoomsByHostel, getHostelReviews, createBooking, createReview } from '../utils/api';
+import { getHostelById, getRoomsByHostel, getHostelReviews, createBooking, createReview, getMyBookings } from '../utils/api';
 import { useToast } from '../hooks/useToast';
 import Toast from '../components/Toast';
 
@@ -43,6 +44,8 @@ export default function HostelDetail({ token, user }) {
     const [reviewRating, setReviewRating] = useState(5);
     const [reviewComment, setReviewComment] = useState('');
     const [submittingReview, setSubmittingReview] = useState(false);
+    const [eligibleBookings, setEligibleBookings] = useState([]);
+    const [selectedBookingId, setSelectedBookingId] = useState('');
 
     useEffect(() => {
         const load = async () => {
@@ -81,13 +84,31 @@ export default function HostelDetail({ token, user }) {
         }
     };
 
+    const openReviewDialog = async () => {
+        try {
+            const myBookings = await getMyBookings(token);
+            // Only bookings for this hostel that are COMPLETED and not yet reviewed
+            const eligible = (myBookings || []).filter(
+                b => String(b.hostel_id) === String(id) && b.status === 'COMPLETED'
+            );
+            setEligibleBookings(eligible);
+            setSelectedBookingId(eligible.length === 1 ? String(eligible[0].id) : '');
+        } catch {
+            setEligibleBookings([]);
+            setSelectedBookingId('');
+        }
+        setReviewOpen(true);
+    };
+
     const handleReview = async () => {
+        if (!selectedBookingId) return;
         setSubmittingReview(true);
         try {
-            await createReview({ hostel_id: Number(id), rating: reviewRating, comment: reviewComment }, token);
+            await createReview({ booking_id: Number(selectedBookingId), rating: reviewRating, comment: reviewComment }, token);
             showToast('Review posted!', 'success', 'Thank you');
             setReviewOpen(false);
             setReviewComment('');
+            setSelectedBookingId('');
             const rev = await getHostelReviews(id);
             setReviews(rev);
         } catch (err) {
@@ -125,8 +146,11 @@ export default function HostelDetail({ token, user }) {
                     {hostel.description && <Typography variant="body2" color="text.secondary" mt={2}>{hostel.description}</Typography>}
                     {hostel.amenities && (
                         <Stack direction="row" spacing={0.5} mt={2} flexWrap="wrap" useFlexGap>
-                            {hostel.amenities.split(',').map(a => (
-                                <Chip key={a} label={a.trim()} size="small" sx={{ bgcolor: BRAND.orangeLight, color: BRAND.teal, fontWeight: 600 }} />
+                            {(Array.isArray(hostel.amenities)
+                                ? hostel.amenities
+                                : hostel.amenities.split(',')
+                            ).map(a => (
+                                <Chip key={a} label={typeof a === 'string' ? a.trim() : a} size="small" sx={{ bgcolor: BRAND.orangeLight, color: BRAND.teal, fontWeight: 600 }} />
                             ))}
                         </Stack>
                     )}
@@ -182,7 +206,7 @@ export default function HostelDetail({ token, user }) {
                     <Typography variant="h6" fontWeight={700} color={BRAND.teal}>Reviews ({reviews.length})</Typography>
                 </Stack>
                 {user?.role === 'STUDENT' && (
-                    <Button variant="outlined" onClick={() => setReviewOpen(true)} sx={{ color: BRAND.teal, borderColor: BRAND.teal, fontWeight: 700 }}>
+                    <Button variant="outlined" onClick={openReviewDialog} sx={{ color: BRAND.teal, borderColor: BRAND.teal, fontWeight: 700 }}>
                         Write Review
                     </Button>
                 )}
@@ -232,17 +256,43 @@ export default function HostelDetail({ token, user }) {
             <Dialog open={reviewOpen} onClose={() => setReviewOpen(false)} slotProps={{ paper: { sx: { borderRadius: 3, minWidth: 380 } } }}>
                 <DialogTitle sx={{ fontWeight: 800, color: BRAND.teal }}>Write a Review</DialogTitle>
                 <DialogContent>
-                    <Stack alignItems="center" my={2}>
-                        <Rating value={reviewRating} onChange={(_, v) => setReviewRating(v)} size="large" />
-                    </Stack>
-                    <TextField label="Comment (optional)" fullWidth multiline rows={3} value={reviewComment} onChange={e => setReviewComment(e.target.value)} />
+                    {eligibleBookings.length === 0 ? (
+                        <Alert severity="info" sx={{ mt: 1 }}>
+                            You can only review hostels where you have a <strong>completed</strong> booking.
+                        </Alert>
+                    ) : (
+                        <>
+                            {eligibleBookings.length > 1 && (
+                                <FormControl fullWidth sx={{ mt: 1, mb: 1 }}>
+                                    <InputLabel>Select Booking</InputLabel>
+                                    <Select
+                                        value={selectedBookingId}
+                                        label="Select Booking"
+                                        onChange={e => setSelectedBookingId(e.target.value)}
+                                    >
+                                        {eligibleBookings.map(b => (
+                                            <MenuItem key={b.id} value={String(b.id)}>
+                                                Booking #{b.id} · Room {b.room_number ?? b.room_id} · {b.check_in_date?.slice(0, 10)}
+                                            </MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+                            )}
+                            <Stack alignItems="center" my={2}>
+                                <Rating value={reviewRating} onChange={(_, v) => setReviewRating(v)} size="large" />
+                            </Stack>
+                            <TextField label="Comment (optional)" fullWidth multiline rows={3} value={reviewComment} onChange={e => setReviewComment(e.target.value)} />
+                        </>
+                    )}
                 </DialogContent>
                 <DialogActions sx={{ px: 3, pb: 2 }}>
                     <Button onClick={() => setReviewOpen(false)} sx={{ color: 'text.secondary' }}>Cancel</Button>
-                    <Button variant="contained" onClick={handleReview} disabled={submittingReview}
-                        sx={{ bgcolor: BRAND.teal, '&:hover': { bgcolor: BRAND.tealDark }, fontWeight: 700 }}>
-                        {submittingReview ? <CircularProgress size={20} sx={{ color: '#fff' }} /> : 'Post Review'}
-                    </Button>
+                    {eligibleBookings.length > 0 && (
+                        <Button variant="contained" onClick={handleReview} disabled={submittingReview || !selectedBookingId}
+                            sx={{ bgcolor: BRAND.teal, '&:hover': { bgcolor: BRAND.tealDark }, fontWeight: 700 }}>
+                            {submittingReview ? <CircularProgress size={20} sx={{ color: '#fff' }} /> : 'Post Review'}
+                        </Button>
+                    )}
                 </DialogActions>
             </Dialog>
 

@@ -2,15 +2,19 @@
  * pages/MyBookings.jsx — Student: view all my bookings + pay for approved ones
  */
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
     Box, Typography, Stack, Chip, CircularProgress, Alert,
-    Card, CardContent, Button, Grid,
+    Card, CardContent, Button, Grid, Tabs, Tab, Divider,
     Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem,
 } from '@mui/material';
 import BookOnlineIcon from '@mui/icons-material/BookOnline';
 import PaymentIcon from '@mui/icons-material/Payment';
 import CancelIcon from '@mui/icons-material/Cancel';
 import ApartmentIcon from '@mui/icons-material/Apartment';
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+import MeetingRoomIcon from '@mui/icons-material/MeetingRoom';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { getMyBookings, cancelBooking, makePayment } from '../utils/api';
 import { useToast } from '../hooks/useToast';
 import Toast from '../components/Toast';
@@ -25,12 +29,18 @@ const STATUS_COLORS = {
     CANCELLED: { bg: '#F5F5F5', text: '#9E9E9E' },
 };
 
+const STATUS_TABS = ['ALL', 'PENDING', 'APPROVED', 'COMPLETED', 'DECLINED', 'CANCELLED'];
+
+const fmt = (d) => d ? new Date(d).toLocaleDateString('en-UG', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
+
 export default function MyBookings({ token }) {
+    const navigate = useNavigate();
     const { toast, showToast, hideToast } = useToast();
 
-    const [bookings, setBookings] = useState([]);
+    const [allBookings, setAllBookings] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [tab, setTab] = useState('ALL');
 
     // Pay dialog
     const [payOpen, setPayOpen] = useState(false);
@@ -43,7 +53,7 @@ export default function MyBookings({ token }) {
         setLoading(true);
         setError('');
         try {
-            setBookings(await getMyBookings(token));
+            setAllBookings(await getMyBookings(token));
         } catch (err) {
             setError(err.message);
         } finally {
@@ -51,7 +61,11 @@ export default function MyBookings({ token }) {
         }
     };
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => { fetchBookings(); }, [token]);
+
+    const bookings = tab === 'ALL' ? allBookings : allBookings.filter(b => b.status === tab);
+    const countFor = (s) => s === 'ALL' ? allBookings.length : allBookings.filter(b => b.status === s).length;
 
     const handleCancel = async (id) => {
         try {
@@ -79,60 +93,153 @@ export default function MyBookings({ token }) {
 
     return (
         <Box>
+            {/* Page header */}
             <Stack direction="row" alignItems="center" spacing={1.5} mb={3}>
                 <Box sx={{ width: 4, height: 26, bgcolor: BRAND.orange, borderRadius: 1 }} />
                 <Typography variant="h5" fontWeight={800} color={BRAND.teal}>My Bookings</Typography>
-                {!loading && <Chip label={bookings.length} size="small" sx={{ bgcolor: BRAND.orangeLight, color: BRAND.teal, fontWeight: 700 }} />}
+                {!loading && (
+                    <Chip label={allBookings.length} size="small"
+                        sx={{ bgcolor: BRAND.orangeLight, color: BRAND.teal, fontWeight: 700 }} />
+                )}
             </Stack>
 
             {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
             {loading && <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}><CircularProgress sx={{ color: BRAND.teal }} /></Box>}
 
-            {!loading && bookings.length === 0 && (
-                <Box sx={{ textAlign: 'center', py: 10, color: 'text.secondary' }}>
-                    <BookOnlineIcon sx={{ fontSize: 72, color: BRAND.orangeLight }} />
-                    <Typography mt={2} fontWeight={600}>No bookings yet. Browse hostels to get started!</Typography>
+            {/* Filter tabs */}
+            {!loading && (
+                <Box sx={{ mb: 3, bgcolor: '#fff', borderRadius: 3, border: '1px solid rgba(0,0,0,0.07)', overflow: 'hidden' }}>
+                    <Tabs
+                        value={tab}
+                        onChange={(_, v) => setTab(v)}
+                        variant="scrollable"
+                        scrollButtons="auto"
+                        sx={{
+                            '& .MuiTab-root': { minHeight: 48, fontWeight: 700, fontSize: 13, textTransform: 'none' },
+                            '& .Mui-selected': { color: BRAND.teal },
+                            '& .MuiTabs-indicator': { bgcolor: BRAND.teal, height: 3 },
+                        }}
+                    >
+                        {STATUS_TABS.map(s => (
+                            <Tab key={s} value={s} label={
+                                <Stack direction="row" alignItems="center" spacing={0.75}>
+                                    <span>{s === 'ALL' ? 'All' : s.charAt(0) + s.slice(1).toLowerCase()}</span>
+                                    {countFor(s) > 0 && (
+                                        <Chip label={countFor(s)} size="small"
+                                            sx={{
+                                                height: 18, fontSize: 10, fontWeight: 700,
+                                                bgcolor: s === tab ? BRAND.teal : 'rgba(0,0,0,0.08)',
+                                                color: s === tab ? '#fff' : 'text.secondary',
+                                                pointerEvents: 'none'
+                                            }} />
+                                    )}
+                                </Stack>
+                            } />
+                        ))}
+                    </Tabs>
                 </Box>
             )}
 
+            {/* Empty state */}
+            {!loading && allBookings.length === 0 && (
+                <Box sx={{ textAlign: 'center', py: 10, color: 'text.secondary' }}>
+                    <BookOnlineIcon sx={{ fontSize: 72, color: BRAND.orangeLight }} />
+                    <Typography mt={2} fontWeight={600}>No bookings yet. Browse hostels to get started!</Typography>
+                    <Button variant="contained" sx={{ mt: 2, bgcolor: BRAND.teal, fontWeight: 700 }} onClick={() => navigate('/hostels')}>
+                        Browse Hostels
+                    </Button>
+                </Box>
+            )}
+
+            {!loading && allBookings.length > 0 && bookings.length === 0 && (
+                <Box sx={{ textAlign: 'center', py: 8, color: 'text.secondary' }}>
+                    <BookOnlineIcon sx={{ fontSize: 56, color: BRAND.orangeLight }} />
+                    <Typography mt={2} fontWeight={600}>No {tab.toLowerCase()} bookings.</Typography>
+                </Box>
+            )}
+
+            {/* Booking cards */}
             {!loading && (
                 <Grid container spacing={2}>
                     {bookings.map(b => {
                         const sc = STATUS_COLORS[b.status] ?? STATUS_COLORS.PENDING;
                         return (
                             <Grid item xs={12} sm={6} md={4} key={b.id}>
-                                <Card sx={{ borderRadius: 3, border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 2px 10px rgba(0,0,0,0.07)' }}>
-                                    <Box sx={{ height: 4, bgcolor: sc.text }} />
-                                    <CardContent>
-                                        <Stack direction="row" alignItems="center" spacing={1} mb={1}>
-                                            <ApartmentIcon sx={{ color: BRAND.teal }} />
-                                            <Typography variant="subtitle1" fontWeight={700} noWrap>{b.hostel_name}</Typography>
+                                <Card sx={{
+                                    borderRadius: 3, height: '100%', display: 'flex', flexDirection: 'column',
+                                    border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 2px 10px rgba(0,0,0,0.07)',
+                                    transition: 'all 0.2s',
+                                    '&:hover': { transform: 'translateY(-3px)', boxShadow: '0 8px 24px rgba(0,0,0,0.12)' },
+                                }}>
+                                    {/* Colour stripe + hostel name */}
+                                    <Box sx={{ bgcolor: sc.text, px: 2, py: 1.5 }}>
+                                        <Stack direction="row" alignItems="center" justifyContent="space-between">
+                                            <Stack direction="row" alignItems="center" spacing={1} sx={{ overflow: 'hidden' }}>
+                                                <ApartmentIcon sx={{ color: '#fff', fontSize: 18, flexShrink: 0 }} />
+                                                <Typography variant="subtitle2" fontWeight={800} color="#fff" noWrap>
+                                                    {b.hostel_name}
+                                                </Typography>
+                                            </Stack>
+                                            <Chip label={b.status} size="small"
+                                                sx={{ bgcolor: 'rgba(255,255,255,0.22)', color: '#fff', fontWeight: 700, fontSize: 10, border: '1px solid rgba(255,255,255,0.4)' }} />
                                         </Stack>
-                                        <Typography variant="body2" color="text.secondary">Room {b.room_number} · {b.room_type}</Typography>
-                                        <Typography variant="body2" color="text.secondary">
-                                            {new Date(b.check_in_date).toLocaleDateString()} → {new Date(b.check_out_date).toLocaleDateString()}
-                                        </Typography>
-                                        <Typography variant="h6" fontWeight={800} color={BRAND.orange} mt={1}>
+                                    </Box>
+
+                                    <CardContent sx={{ flex: 1, pt: 2 }}>
+                                        {/* Room info */}
+                                        <Stack direction="row" spacing={0.75} alignItems="center" mb={1.5}>
+                                            <MeetingRoomIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+                                            <Typography variant="body2" color="text.secondary">
+                                                Room {b.room_number}
+                                            </Typography>
+                                            <Chip label={b.room_type} size="small"
+                                                sx={{ fontSize: 10, bgcolor: '#E3F2FD', color: '#0288D1', fontWeight: 600 }} />
+                                        </Stack>
+
+                                        {/* Dates */}
+                                        <Stack direction="row" spacing={0.75} alignItems="flex-start" mb={1}>
+                                            <CalendarTodayIcon sx={{ fontSize: 15, color: 'text.secondary', mt: 0.25 }} />
+                                            <Box>
+                                                <Typography variant="caption" color="text.secondary" display="block">
+                                                    {fmt(b.check_in_date)} → {fmt(b.check_out_date)}
+                                                </Typography>
+                                            </Box>
+                                        </Stack>
+
+                                        <Divider sx={{ my: 1.5 }} />
+
+                                        {/* Price */}
+                                        <Typography variant="h6" fontWeight={800} color={BRAND.orange}>
                                             UGX {Number(b.price_per_semester).toLocaleString()}
                                         </Typography>
-                                        <Chip label={b.status} size="small" sx={{ mt: 1, bgcolor: sc.bg, color: sc.text, fontWeight: 700 }} />
+                                        <Typography variant="caption" color="text.secondary">per semester</Typography>
+                                    </CardContent>
 
-                                        <Stack direction="row" spacing={1} mt={2}>
+                                    {/* Actions */}
+                                    <Box sx={{ px: 2, pb: 2, pt: 0.5 }}>
+                                        <Stack spacing={1}>
+                                            <Button size="small" variant="text" endIcon={<OpenInNewIcon sx={{ fontSize: 14 }} />}
+                                                onClick={() => navigate(`/hostels/${b.hostel_id}`)}
+                                                sx={{ color: BRAND.teal, fontWeight: 700, justifyContent: 'flex-start', px: 0 }}>
+                                                View Hostel
+                                            </Button>
                                             {b.status === 'APPROVED' && (
-                                                <Button size="small" variant="contained" startIcon={<PaymentIcon />}
-                                                    sx={{ bgcolor: '#2E7D32', '&:hover': { bgcolor: '#1B5E20' }, fontWeight: 700 }}
+                                                <Button fullWidth size="small" variant="contained" startIcon={<PaymentIcon />}
+                                                    sx={{ bgcolor: '#2E7D32', '&:hover': { bgcolor: '#1B5E20' }, fontWeight: 700, borderRadius: 2 }}
                                                     onClick={() => { setPayTarget(b); setPayOpen(true); }}>
-                                                    Pay
+                                                    Pay Now
                                                 </Button>
                                             )}
                                             {(b.status === 'PENDING' || b.status === 'APPROVED') && (
-                                                <Button size="small" variant="outlined" color="error" startIcon={<CancelIcon />}
-                                                    onClick={() => handleCancel(b.id)} sx={{ fontWeight: 700 }}>
-                                                    Cancel
+                                                <Button fullWidth size="small" variant="outlined" color="error"
+                                                    startIcon={<CancelIcon />}
+                                                    onClick={() => handleCancel(b.id)}
+                                                    sx={{ fontWeight: 700, borderRadius: 2 }}>
+                                                    Cancel Booking
                                                 </Button>
                                             )}
                                         </Stack>
-                                    </CardContent>
+                                    </Box>
                                 </Card>
                             </Grid>
                         );

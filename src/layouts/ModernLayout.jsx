@@ -6,11 +6,12 @@
  *   CUSTODIAN → Dashboard, My Hostels, Booking Requests
  *   ADMIN     → Dashboard, All Users, Browse Hostels
  */
+import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
     Box, Drawer, AppBar, Toolbar, List, ListItemButton, ListItemIcon,
     ListItemText, Typography, Avatar, Divider, Stack, Tooltip,
-    IconButton, Breadcrumbs, Link, Chip,
+    IconButton, Breadcrumbs, Link, Chip, useMediaQuery, useTheme,
 } from '@mui/material';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import SearchIcon from '@mui/icons-material/Search';
@@ -20,6 +21,7 @@ import PeopleIcon from '@mui/icons-material/People';
 import InboxIcon from '@mui/icons-material/Inbox';
 import LogoutIcon from '@mui/icons-material/Logout';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
+import MenuIcon from '@mui/icons-material/Menu';
 
 const DRAWER_WIDTH = 240;
 
@@ -69,6 +71,9 @@ const ROLE_LABELS = { STUDENT: 'Student', CUSTODIAN: 'Custodian', ADMIN: 'Admin'
 export default function ModernLayout({ children, user }) {
     const location = useLocation();
     const navigate = useNavigate();
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+    const [mobileOpen, setMobileOpen] = useState(false);
 
     const displayName = user?.full_name ?? 'User';
     const role = user?.role ?? 'STUDENT';
@@ -80,12 +85,17 @@ export default function ModernLayout({ children, user }) {
         navigate('/login');
     };
 
-    const drawer = (
+    const navClick = (path) => {
+        navigate(path);
+        setMobileOpen(false);
+    };
+
+    const drawerContent = (
         <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', bgcolor: BRAND.teal, color: BRAND.white }}>
 
             {/* Branding header */}
             <Box sx={{ px: 2.5, pt: 3, pb: 2 }}>
-                <Stack direction="row" alignItems="center" spacing={1.5} mb={0.5}>
+                <Stack direction="row" alignItems="center" spacing={1.5}>
                     <Box sx={{ width: 42, height: 42, borderRadius: '50%', bgcolor: BRAND.white, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 2px 8px rgba(0,0,0,0.25)' }}>
                         <ApartmentIcon sx={{ fontSize: 26, color: BRAND.teal }} />
                     </Box>
@@ -105,18 +115,18 @@ export default function ModernLayout({ children, user }) {
             {/* Nav list */}
             <List sx={{ px: 1.5, pt: 1.5, flexGrow: 1 }}>
                 {navItems.map(({ path, label, icon }) => {
-                    const active = location.pathname === path;
+                    const active = location.pathname === path || (path !== '/dashboard' && location.pathname.startsWith(path));
                     return (
                         <ListItemButton
                             key={path}
-                            onClick={() => navigate(path)}
+                            onClick={() => navClick(path)}
                             sx={{
-                                borderRadius: 2, mb: 0.5, px: 1.5, py: 1,
-                                color: active ? BRAND.orange : 'rgba(255,255,255,0.75)',
-                                bgcolor: active ? 'rgba(242,153,74,0.15)' : 'transparent',
+                                borderRadius: 2, mb: 0.5, px: 1.5, py: 1.1,
+                                color: active ? BRAND.orange : 'rgba(255,255,255,0.78)',
+                                bgcolor: active ? 'rgba(242,153,74,0.18)' : 'transparent',
                                 borderLeft: active ? `3px solid ${BRAND.orange}` : '3px solid transparent',
-                                '&:hover': { bgcolor: 'rgba(255,255,255,0.08)', color: BRAND.white },
-                                transition: 'all 0.18s ease',
+                                '&:hover': { bgcolor: 'rgba(255,255,255,0.09)', color: BRAND.white },
+                                transition: 'all 0.15s ease',
                             }}
                         >
                             <ListItemIcon sx={{ minWidth: 38, color: 'inherit' }}>{icon}</ListItemIcon>
@@ -140,12 +150,12 @@ export default function ModernLayout({ children, user }) {
                         <Typography variant="body2" sx={{ color: BRAND.white, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                             {displayName}
                         </Typography>
-                        <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.45)', fontSize: 10 }}>
+                        <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)', fontSize: 10 }}>
                             {ROLE_LABELS[role] ?? role}
                         </Typography>
                     </Box>
                     <Tooltip title="Logout">
-                        <IconButton size="small" onClick={handleLogout} sx={{ color: 'rgba(255,255,255,0.55)', '&:hover': { color: BRAND.orange } }}>
+                        <IconButton size="small" onClick={handleLogout} sx={{ color: 'rgba(255,255,255,0.6)', '&:hover': { color: BRAND.orange } }}>
                             <LogoutIcon fontSize="small" />
                         </IconButton>
                     </Tooltip>
@@ -156,39 +166,103 @@ export default function ModernLayout({ children, user }) {
 
     return (
         <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: BRAND.offWhite }}>
+
+            {/* Desktop permanent drawer */}
             <Drawer
                 variant="permanent"
                 sx={{
+                    display: { xs: 'none', md: 'block' },
                     width: DRAWER_WIDTH, flexShrink: 0,
-                    '& .MuiDrawer-paper': { width: DRAWER_WIDTH, boxSizing: 'border-box', border: 'none', boxShadow: '4px 0 20px rgba(0,0,0,0.12)' },
+                    '& .MuiDrawer-paper': { width: DRAWER_WIDTH, boxSizing: 'border-box', border: 'none', boxShadow: '4px 0 24px rgba(0,0,0,0.13)' },
                 }}
             >
-                {drawer}
+                {drawerContent}
             </Drawer>
 
-            <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                <AppBar position="static" elevation={0} sx={{ bgcolor: BRAND.white, borderBottom: `3px solid ${BRAND.teal}`, color: 'text.primary' }}>
-                    <Toolbar sx={{ minHeight: 56 }}>
-                        <Breadcrumbs separator={<NavigateNextIcon fontSize="small" sx={{ color: BRAND.teal }} />} sx={{ flexGrow: 1 }}>
-                            <Link underline="hover" onClick={() => navigate('/dashboard')} sx={{ cursor: 'pointer', fontSize: 13, color: BRAND.teal, fontWeight: 600 }}>
+            {/* Mobile temporary drawer */}
+            <Drawer
+                variant="temporary"
+                open={mobileOpen}
+                onClose={() => setMobileOpen(false)}
+                ModalProps={{ keepMounted: true }}
+                sx={{
+                    display: { xs: 'block', md: 'none' },
+                    '& .MuiDrawer-paper': { width: DRAWER_WIDTH, boxSizing: 'border-box', border: 'none' },
+                }}
+            >
+                {drawerContent}
+            </Drawer>
+
+            <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
+
+                {/* Top AppBar */}
+                <AppBar
+                    position="sticky"
+                    elevation={0}
+                    sx={{
+                        bgcolor: BRAND.white,
+                        borderBottom: `3px solid ${BRAND.teal}`,
+                        color: 'text.primary',
+                        zIndex: (t) => t.zIndex.drawer - 1,
+                    }}
+                >
+                    <Toolbar sx={{ minHeight: 56, gap: 1 }}>
+                        {/* Hamburger — mobile only */}
+                        <IconButton
+                            edge="start"
+                            onClick={() => setMobileOpen(true)}
+                            sx={{ display: { xs: 'flex', md: 'none' }, color: BRAND.teal, mr: 0.5 }}
+                        >
+                            <MenuIcon />
+                        </IconButton>
+
+                        <Breadcrumbs
+                            separator={<NavigateNextIcon fontSize="small" sx={{ color: BRAND.teal }} />}
+                            sx={{ flexGrow: 1 }}
+                        >
+                            <Link
+                                underline="hover"
+                                onClick={() => navigate('/dashboard')}
+                                sx={{ cursor: 'pointer', fontSize: 13, color: BRAND.teal, fontWeight: 600 }}
+                            >
                                 Home
                             </Link>
                             <Typography sx={{ fontSize: 13, fontWeight: 700, color: BRAND.teal }}>{pageLabel}</Typography>
                         </Breadcrumbs>
+
+                        {/* Role badge */}
                         <Chip
-                            avatar={<Avatar sx={{ bgcolor: `${avatarBg(displayName)} !important`, fontSize: 12 }}>{displayName[0]?.toUpperCase()}</Avatar>}
+                            label={ROLE_LABELS[role] ?? role}
+                            size="small"
+                            sx={{ bgcolor: BRAND.orangeLight, color: BRAND.teal, fontWeight: 700, fontSize: 11, display: { xs: 'none', sm: 'flex' } }}
+                        />
+
+                        {/* User chip */}
+                        <Chip
+                            avatar={
+                                <Avatar sx={{ bgcolor: `${avatarBg(displayName)} !important`, fontSize: 12, fontWeight: 700 }}>
+                                    {displayName[0]?.toUpperCase()}
+                                </Avatar>
+                            }
                             label={displayName}
-                            size="small" variant="outlined"
+                            size="small"
+                            variant="outlined"
                             sx={{ borderColor: BRAND.teal, color: BRAND.teal, fontWeight: 600, fontSize: 12 }}
                         />
                     </Toolbar>
                 </AppBar>
 
-                <Box component="main" sx={{ flexGrow: 1, p: 3, overflow: 'auto' }}>
+                {/* Page content */}
+                <Box component="main" sx={{ flexGrow: 1, p: { xs: 2, sm: 3 }, overflow: 'auto' }}>
                     {children}
                 </Box>
 
-                <Box sx={{ textAlign: 'center', py: 1.5, borderTop: '1px solid rgba(14,124,107,0.12)', color: BRAND.teal, fontSize: 11, fontWeight: 500, opacity: 0.7 }}>
+                {/* Footer */}
+                <Box sx={{
+                    textAlign: 'center', py: 1.5,
+                    borderTop: '1px solid rgba(14,124,107,0.1)',
+                    color: BRAND.teal, fontSize: 11, fontWeight: 500, opacity: 0.65,
+                }}>
                     © {new Date().getFullYear()} Ostello — Hostel Discovery &amp; Booking Platform
                 </Box>
             </Box>

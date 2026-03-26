@@ -4,8 +4,11 @@
  * Decodes the JWT on the client to read { id, email, full_name, role }.
  * ProtectedRoute enforces auth; RoleRoute enforces role access.
  */
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
+import { Box, Typography, Button, Stack } from '@mui/material';
+import SentimentDissatisfiedIcon from '@mui/icons-material/SentimentDissatisfied';
+import HomeIcon from '@mui/icons-material/Home';
 import ModernLayout from './layouts/ModernLayout';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -16,6 +19,42 @@ import MyBookings from './pages/MyBookings';
 import ManageHostels from './pages/ManageHostels';
 import BookingRequests from './pages/BookingRequests';
 import Users from './pages/Users';
+
+const BRAND = { teal: '#0E7C6B', orange: '#F2994A', orangeLight: '#FDE8D0' };
+
+// ── 404 Not Found ─────────────────────────────────────────────────────────────
+function NotFound() {
+    const navigate = useNavigate();
+    return (
+        <Box sx={{
+            minHeight: '100vh', display: 'flex', flexDirection: 'column',
+            alignItems: 'center', justifyContent: 'center',
+            background: 'linear-gradient(135deg, #F5F7FA 0%, #E8F5F2 100%)',
+            px: 3, textAlign: 'center',
+        }}>
+            <SentimentDissatisfiedIcon sx={{ fontSize: 90, color: BRAND.teal, opacity: 0.35, mb: 2 }} />
+            <Typography variant="h1" fontWeight={900} sx={{ fontSize: { xs: 80, md: 120 }, color: BRAND.teal, lineHeight: 1, mb: 1 }}>
+                404
+            </Typography>
+            <Typography variant="h5" fontWeight={700} color="text.primary" mb={1}>
+                Page not found
+            </Typography>
+            <Typography variant="body1" color="text.secondary" mb={4} sx={{ maxWidth: 380 }}>
+                The page you&apos;re looking for doesn&apos;t exist or has been moved.
+            </Typography>
+            <Stack direction="row" spacing={2}>
+                <Button variant="contained" startIcon={<HomeIcon />} onClick={() => navigate('/')}
+                    sx={{ bgcolor: BRAND.teal, fontWeight: 700, borderRadius: 2.5, px: 3, '&:hover': { bgcolor: '#065C50' } }}>
+                    Go Home
+                </Button>
+                <Button variant="outlined" onClick={() => navigate(-1)}
+                    sx={{ borderColor: BRAND.teal, color: BRAND.teal, fontWeight: 700, borderRadius: 2.5, px: 3 }}>
+                    Go Back
+                </Button>
+            </Stack>
+        </Box>
+    );
+}
 
 // ── Decode JWT payload ────────────────────────────────────────────────────────
 function decodeToken(token) {
@@ -128,8 +167,8 @@ export default function AppRouter() {
                     </Page>
                 } />
 
-                {/* Catch-all */}
-                <Route path="*" element={<Navigate to="/" replace />} />
+                {/* 404 — catch-all */}
+                <Route path="*" element={<NotFound />} />
             </Routes>
         </Router>
     );

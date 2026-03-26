@@ -188,8 +188,8 @@ export default function ManageHostels({ token }) {
                                         <Typography variant="body2" color="text.secondary">{h.address}</Typography>
                                         {h.amenities && (
                                             <Stack direction="row" spacing={0.5} mt={0.5} flexWrap="wrap" useFlexGap>
-                                                {h.amenities.split(',').map(a => (
-                                                    <Chip key={a} label={a.trim()} size="small" sx={{ fontSize: 10, bgcolor: BRAND.orangeLight, color: BRAND.teal, fontWeight: 600 }} />
+                                                {(Array.isArray(h.amenities) ? h.amenities : h.amenities.split(',')).map(a => (
+                                                    <Chip key={a} label={typeof a === 'string' ? a.trim() : a} size="small" sx={{ fontSize: 10, bgcolor: BRAND.orangeLight, color: BRAND.teal, fontWeight: 600 }} />
                                                 ))}
                                             </Stack>
                                         )}

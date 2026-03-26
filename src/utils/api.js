@@ -32,7 +32,7 @@
 // The base URL for all API calls.
 // Change this string if your backend runs on a different host or port.
 // In production this would be something like 'https://api.ostello.com'.
-const API_BASE = 'http://localhost:3000/api';
+const API_BASE = 'http://localhost:3001/api';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

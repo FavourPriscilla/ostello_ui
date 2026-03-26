@@ -143,7 +143,7 @@ export default function Dashboard({ token, user }) {
                         {role === 'STUDENT' && (
                             <Button variant="contained" startIcon={<SearchIcon />} onClick={() => navigate('/hostels')}
                                 sx={{ bgcolor: BRAND.orange, color: '#3D2100', fontWeight: 800, borderRadius: 2.5, px: 2.5, '&:hover': { bgcolor: '#E8A84A' }, boxShadow: '0 4px 14px rgba(242,153,74,0.4)' }}>
-                                Browse Hostels
+                                Browse Hostel
                             </Button>
                         )}
                         {role === 'CUSTODIAN' && (

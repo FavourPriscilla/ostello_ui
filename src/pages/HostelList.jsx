@@ -230,7 +230,7 @@ function getlocation() {
                                             Save
                                         </Button>
                                         <button onclick={getlocation}>
-                                            Find nearby hostels  
+                                            Find nearby hostels   
                                         </button>
                                     </Box>
                                 </Card>

@@ -144,24 +144,40 @@ export default function HostelList() {
                                     '&:hover': { transform: 'translateY(-5px)', boxShadow: '0 10px 32px rgba(14,124,107,0.18)' },
                                 }}>
                                     <CardActionArea onClick={() => navigate(`/hostels/${h.id}`)} sx={{ flexGrow: 1 }}>
-                                        {/* Visual placeholder */}
-                                        <Box sx={{
-                                            height: 160, position: 'relative',
-                                            background: CARD_GRADIENTS[idx % CARD_GRADIENTS.length],
-                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        }}>
-                                            <ApartmentIcon sx={{ fontSize: 68, color: BRAND.teal, opacity: 0.45 }} />
-                                            {minP && (
-                                                <Box sx={{
-                                                    position: 'absolute', bottom: 10, right: 12,
-                                                    bgcolor: BRAND.teal, color: '#fff',
-                                                    px: 1.5, py: 0.4, borderRadius: 5,
-                                                    fontSize: 11, fontWeight: 800,
-                                                }}>
-                                                    From UGX {minP.toLocaleString()}
-                                                </Box>
-                                            )}
-                                        </Box>
+                                        {/* Visual */}
+                                        {h.photos && h.photos[0] ? (
+                                            <Box sx={{ height: 160, overflow: 'hidden', position: 'relative' }}>
+                                                <img src={h.photos[0]} alt={h.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                {minP && (
+                                                    <Box sx={{
+                                                        position: 'absolute', bottom: 10, right: 12,
+                                                        bgcolor: BRAND.teal, color: '#fff',
+                                                        px: 1.5, py: 0.4, borderRadius: 5,
+                                                        fontSize: 11, fontWeight: 800,
+                                                    }}>
+                                                        From UGX {minP.toLocaleString()}
+                                                    </Box>
+                                                )}
+                                            </Box>
+                                        ) : (
+                                            <Box sx={{
+                                                height: 160, position: 'relative',
+                                                background: CARD_GRADIENTS[idx % CARD_GRADIENTS.length],
+                                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                            }}>
+                                                <ApartmentIcon sx={{ fontSize: 68, color: BRAND.teal, opacity: 0.45 }} />
+                                                {minP && (
+                                                    <Box sx={{
+                                                        position: 'absolute', bottom: 10, right: 12,
+                                                        bgcolor: BRAND.teal, color: '#fff',
+                                                        px: 1.5, py: 0.4, borderRadius: 5,
+                                                        fontSize: 11, fontWeight: 800,
+                                                    }}>
+                                                        From UGX {minP.toLocaleString()}
+                                                    </Box>
+                                                )}
+                                            </Box>
+                                        )}
 
                                         <CardContent sx={{ pt: 2, pb: 1 }}>
                                             <Typography variant="h6" fontWeight={700} noWrap color={BRAND.teal}>{h.name}</Typography>

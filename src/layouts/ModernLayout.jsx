@@ -11,7 +11,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import {
     Box, Drawer, AppBar, Toolbar, List, ListItemButton, ListItemIcon,
     ListItemText, Typography, Avatar, Divider, Stack, Tooltip,
-    IconButton, Breadcrumbs, Link, Chip, useMediaQuery, useTheme,
+    IconButton, Breadcrumbs, Link, Chip,
 } from '@mui/material';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import SearchIcon from '@mui/icons-material/Search';
@@ -71,8 +71,6 @@ const ROLE_LABELS = { STUDENT: 'Student', CUSTODIAN: 'Custodian', ADMIN: 'Admin'
 export default function ModernLayout({ children, user }) {
     const location = useLocation();
     const navigate = useNavigate();
-    const theme = useTheme();
-    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
     const [mobileOpen, setMobileOpen] = useState(false);
 
     const displayName = user?.full_name ?? 'User';

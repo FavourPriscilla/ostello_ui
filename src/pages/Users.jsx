@@ -1,7 +1,7 @@
 /**
  * pages/Users.jsx — Ostello Admin User Management
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { getUsers, updateUser, deleteUser } from '../utils/api';
 import { useToast } from '../hooks/useToast';
 import Toast from '../components/Toast';
@@ -46,7 +46,7 @@ export default function Users({ token }) {
     const [deleteTarget, setDeleteTarget] = useState(null);
     const [deleting, setDeleting] = useState(false);
 
-    const fetchUsers = async () => {
+    const fetchUsers = useCallback(async () => {
         setLoading(true);
         setError('');
         try {
@@ -56,9 +56,9 @@ export default function Users({ token }) {
         } finally {
             setLoading(false);
         }
-    };
+    }, [token]);
 
-    useEffect(() => { fetchUsers(); }, [token]);
+    useEffect(() => { fetchUsers(); }, [fetchUsers]);
 
     const openForm = (u) => {
         setEditTarget(u);

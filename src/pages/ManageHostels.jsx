@@ -1,7 +1,7 @@
 /**
  * pages/ManageHostels.jsx — Custodian: CRUD hostels + rooms
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import {
     Box, Typography, Stack, Chip, CircularProgress, Alert,
     Card, CardContent, Button, Grid, IconButton, Tooltip,
@@ -46,7 +46,7 @@ export default function ManageHostels({ token }) {
     const [roomForm, setRoomForm] = useState(emptyRoom);
     const [roomSaving, setRoomSaving] = useState(false);
 
-    const fetchHostels = async () => {
+    const fetchHostels = useCallback(async () => {
         setLoading(true);
         setError('');
         try {
@@ -56,9 +56,9 @@ export default function ManageHostels({ token }) {
         } finally {
             setLoading(false);
         }
-    };
+    }, [token]);
 
-    useEffect(() => { fetchHostels(); }, [token]);
+    useEffect(() => { fetchHostels(); }, [fetchHostels]);
 
     const loadRooms = async (hostelId) => {
         try {

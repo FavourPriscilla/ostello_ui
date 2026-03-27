@@ -130,9 +130,15 @@ export default function HostelDetail({ token, user }) {
 
             {/* Hostel Header */}
             <Paper sx={{ borderRadius: 3, overflow: 'hidden', mb: 3, border: '1px solid rgba(0,0,0,0.06)' }}>
-                <Box sx={{ height: 180, bgcolor: '#E6F4F1', display: 'flex', alignItems: 'center', justifyContent: 'center', background: `linear-gradient(135deg, ${BRAND.teal}22 0%, ${BRAND.orange}22 100%)` }}>
-                    <ApartmentIcon sx={{ fontSize: 80, color: BRAND.teal, opacity: 0.4 }} />
-                </Box>
+                {hostel.photos && hostel.photos[0] ? (
+                    <Box sx={{ height: 180, overflow: 'hidden' }}>
+                        <img src={hostel.photos[0]} alt={hostel.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    </Box>
+                ) : (
+                    <Box sx={{ height: 180, bgcolor: '#E6F4F1', display: 'flex', alignItems: 'center', justifyContent: 'center', background: `linear-gradient(135deg, ${BRAND.teal}22 0%, ${BRAND.orange}22 100%)` }}>
+                        <ApartmentIcon sx={{ fontSize: 80, color: BRAND.teal, opacity: 0.4 }} />
+                    </Box>
+                )}
                 <Box sx={{ p: 3 }}>
                     <Typography variant="h4" fontWeight={800} color={BRAND.teal}>{hostel.name}</Typography>
                     <Stack direction="row" alignItems="center" spacing={0.5} mt={1}>

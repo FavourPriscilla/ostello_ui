@@ -1,7 +1,7 @@
 /**
  * pages/BookingRequests.jsx — Custodian: approve / decline booking requests
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import {
     Box, Typography, Stack, Chip, CircularProgress, Alert,
     Card, CardContent, Button, Grid, Tabs, Tab, Avatar, Divider,
@@ -39,7 +39,7 @@ export default function BookingRequests({ token }) {
     const [error, setError] = useState('');
     const [tab, setTab] = useState('ALL');
 
-    const fetchBookings = async () => {
+    const fetchBookings = useCallback(async () => {
         setLoading(true);
         setError('');
         try {
@@ -49,9 +49,9 @@ export default function BookingRequests({ token }) {
         } finally {
             setLoading(false);
         }
-    };
+    }, [token]);
 
-    useEffect(() => { fetchBookings(); }, [token]);
+    useEffect(() => { fetchBookings(); }, [fetchBookings]);
 
     const handleApprove = async (id) => {
         try {

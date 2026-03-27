@@ -20,7 +20,6 @@ const BRAND = {
   orangeLight: '#FDE8D0',
   white: '#FFFFFF',
 };
-
 export default function Register() {
   const navigate = useNavigate();
   const { toast, showToast, hideToast } = useToast();
@@ -28,6 +27,7 @@ export default function Register() {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [phone, setPhone] = useState('');
   const [role, setRole] = useState('STUDENT');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -35,13 +35,13 @@ export default function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    if (!fullName.trim() || !email.trim() || !password.trim()) {
+    if (!fullName.trim() || !email.trim() || !password.trim() || !phone.trim()) {
       setError('Please fill all required fields.');
       return;
     }
     setLoading(true);
     try {
-      await register({ full_name: fullName, email, password, role });
+      await register({ full_name: fullName, email, password, phone, role });
       showToast('Account created! Please verify your email then sign in.', 'success', 'Registered');
       setTimeout(() => navigate('/login'), 1500);
     } catch (err) {
@@ -92,6 +92,7 @@ export default function Register() {
             <TextField label="Full Name" fullWidth margin="normal" value={fullName} onChange={e => setFullName(e.target.value)} required autoFocus />
             <TextField label="Email" type="email" fullWidth margin="normal" value={email} onChange={e => setEmail(e.target.value)} required />
             <TextField label="Password" type="password" fullWidth margin="normal" value={password} onChange={e => setPassword(e.target.value)} required />
+            <TextField label="Phone Number" type="tel" fullWidth margin="normal" value={phone} onChange={e => setPhone(e.target.value)} required />
 
             <FormControl fullWidth margin="normal">
               <InputLabel id="role-label">I am a...</InputLabel>

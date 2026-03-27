@@ -66,7 +66,22 @@ export default function HostelList() {
         setSearch(''); setMinPrice(''); setMaxPrice(''); setRoomType('');
         fetchHostels();
     };
+function getlocation() {
+    navigator.geolocation.getCurrentPosition((position) => {
+        const lat = position.coords.latitude;
+        const ing = position.coords.longitude;
 
+        console.log(lat, lng);
+
+        fetch("/api/hostels",{
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ lat, lng })
+        });
+    });
+}
     return (
         <Box>
             {/* Header */}
@@ -102,10 +117,15 @@ export default function HostelList() {
                             Search
                         </Button>
                         {hasFilters && (
-                            <Button variant="outlined" onClick={handleClear} startIcon={<FilterListOffIcon />}
-                                sx={{ borderColor: BRAND.teal, color: BRAND.teal, fontWeight: 700, height: 40 }}>
-                                Clear
-                            </Button>
+                            <>
+                                <Button variant="outlined" onClick={handleClear} startIcon={<FilterListOffIcon />}
+                                    sx={{ borderColor: BRAND.teal, color: BRAND.teal, fontWeight: 700, height: 40 }}>
+                                    Clear
+                                </Button>
+                                <Button onClick={getlocation}>
+                                    Find Nearby Hostels
+                                </Button>
+                            </>
                         )}
                     </Stack>
                 </Stack>
@@ -206,6 +226,12 @@ export default function HostelList() {
                                             sx={{ bgcolor: BRAND.teal, '&:hover': { bgcolor: BRAND.tealDark }, fontWeight: 700, fontSize: 12, borderRadius: 2 }}>
                                             View Details
                                         </Button>
+                                        <Button size="small" onClick={() => navigate(`/hostels/${h.id}`)} sx={{ ml: 1, color: BRAND.teal, fontWeight: 700, fontSize: 12 }}>
+                                            Save
+                                        </Button>
+                                        <button onclick={getlocation}>
+                                            Find nearby hostels  
+                                        </button>
                                     </Box>
                                 </Card>
                             </Grid>
